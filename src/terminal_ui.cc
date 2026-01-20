@@ -827,11 +827,27 @@ Optional<Key> TerminalUI::get_next_key()
         auto masked_key = [&](Codepoint key, Codepoint shifted_key = 0) {
             int mask = std::max(params[1][0] - 1, 0);
             Key::Modifiers modifiers = parse_mask(mask);
-            if (shifted_key != 0 and (modifiers & Key::Modifiers::Shift))
+            // if (shifted_key != 0 and (modifiers & Key::Modifiers::Shift))
+            // {
+            //     modifiers &= ~Key::Modifiers::Shift;
+            //     key = shifted_key;
+            // }
+
+            if (modifiers & Key::Modifiers::Shift)
             {
-                modifiers &= ~Key::Modifiers::Shift;
-                key = shifted_key;
+                if (shifted_key != 0) {
+                    modifiers &= ~Key::Modifiers::Shift;
+                    key = shifted_key;
+                }
+                // fallback if only KKP level 1 is supported
+                else if (is_basic_alpha(key))
+                {
+                    // Shift + ASCII letters is just the uppercase letter.
+                    modifiers &= ~Key::Modifiers::Shift;
+                    key = to_upper(key);
+                }
             }
+
             return Key{modifiers, key};
         };
 
